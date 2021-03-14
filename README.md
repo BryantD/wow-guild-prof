@@ -20,6 +20,7 @@ Jinja templates!
 1. Generate a set of Blizzard API tokens [here](https://develop.battle.net/access/clients) (you must have a Blizzard account)
 1. Copy wow-guild-example.conf to wow-guild.conf
 1. Edit wow-guild.conf to include your API tokens, your guild name, and anything else you want to change 
+1. Set up a cron job, launchd daemon, or use whatever periodic job scheduler you prefer
 
 ## Usage
 
@@ -33,5 +34,7 @@ in the working directory called wow-guild.conf and prints output to stdout.
 Our crafting list is [here](https://wow.distancinglikepros.com/posts/shadowlands-crafting/).
 
 ## Potential Improvements
+
+This script only handles primaries, thus no Cooking. 
 
 This script doesn't know about item tiers (e.g., Shadowlands legendaries).

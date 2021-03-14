@@ -28,6 +28,7 @@ from datetime import datetime
 import configparser
 import argparse
 import sys
+import pprint
 
 
 def get_config(config_name):
@@ -83,8 +84,7 @@ def get_item_from_recipe(api_client, config, recipe_id):
     return item_data["crafted_item"]["id"]
 
 
-def get_profession_data(api_client, config, profession_data, character_slug):
-
+def get_profession_data(api_client, config, guild_profession_data, character_slug):
     character_profession_data = (
         api_client.wow.profile.get_character_professions_summary(
             config["general"]["region"],
@@ -98,24 +98,25 @@ def get_profession_data(api_client, config, profession_data, character_slug):
         for profession in character_profession_data["primaries"]:
             for tier in profession["tiers"]:
                 tier_name = tier["tier"]["name"]
-                if tier_name in profession_data.keys():
+                if tier_name in guild_profession_data.keys():
                     for recipe in tier["known_recipes"]:
-                        if recipe["name"] not in profession_data[tier_name].keys():
+                        if recipe["name"] not in guild_profession_data[tier_name].keys():
+
                             if "Enchanting" in tier_name:
                                 item_id = recipe["id"]
                             else:
                                 item_id = get_item_from_recipe(
                                     api_client, config, recipe["id"]
                                 )
-                            profession_data[tier_name][recipe["name"]] = {
+                            guild_profession_data[tier_name][recipe["name"]] = {
                                 "id": item_id,
                                 "chars": [],
                             }
-                        profession_data[tier_name][recipe["name"]]["chars"].append(
+                        guild_profession_data[tier_name][recipe["name"]]["chars"].append(
                             character_slug
                         )
 
-    return profession_data
+    return guild_profession_data
 
 
 def print_profession_table(profession_data, exclude_list):
@@ -172,7 +173,9 @@ def main():
     config = get_config(args.config)
 
     exclude_list = config.options("exclude")
-    profession_data = dict.fromkeys(config.options("professions"), {})
+    guild_profession_data = {}
+    for profession_tier in config.options("professions"):
+        guild_profession_data[profession_tier] = {}
 
     api_client = BlizzardApi(config["api"]["client_id"], config["api"]["client_secret"])
     # Failed API initialization doesn't throw an exception, so we catch this when we
@@ -197,15 +200,15 @@ def main():
 
     for character in guild_data["members"]:
         if character["character"]["level"] > int(config["general"]["char_min_level"]):
-            profession_data = get_profession_data(
+            guild_profession_data = get_profession_data(
                 api_client,
                 config,
-                profession_data,
+                guild_profession_data,
                 character["character"]["name"].lower(),
             )
 
     print_header(config)
-    print_profession_table(profession_data, exclude_list)
+    print_profession_table(guild_profession_data, exclude_list)
 
 
 if __name__ == "__main__":
